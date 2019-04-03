@@ -27,6 +27,12 @@
     <ClInclude Include="Lab9_2sem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="WinApiModule.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Color.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

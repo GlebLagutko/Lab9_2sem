@@ -1,180 +1,326 @@
-// Lab9_2sem.cpp : Defines the entry point for the application.
-//
+﻿#include "stdafx.h"
+#include "WinApiModule.h"
+#include "Color.h"
+#include <string>
+#include <string_view>
+#include <array>
 
-#include "stdafx.h"
-#include "Lab9_2sem.h"
+using namespace std;
 
-#define MAX_LOADSTRING 100
+bool paused = false;
 
-// Global Variables:
-HINSTANCE hInst;                                // current instance
-WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
-WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
-
-// Forward declarations of functions included in this code module:
-ATOM                MyRegisterClass(HINSTANCE hInstance);
-BOOL                InitInstance(HINSTANCE, int);
-LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
-INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
-
-int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
-                     _In_opt_ HINSTANCE hPrevInstance,
-                     _In_ LPWSTR    lpCmdLine,
-                     _In_ int       nCmdShow)
+class Application
 {
-    UNREFERENCED_PARAMETER(hPrevInstance);
-    UNREFERENCED_PARAMETER(lpCmdLine);
+	static const int MinDialogWidth = 300;
+	static const int MinDialogHeight = 250;
 
-    // TODO: Place code here.
+	static const int Timer1ID = 1;
+	static const int Timer5ID = 5;
 
-    // Initialize global strings
-    LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
-    LoadStringW(hInstance, IDC_LAB92SEM, szWindowClass, MAX_LOADSTRING);
-    MyRegisterClass(hInstance);
+	static const int Timer1Interval = 1000;
+	static const int Timer15Interval = 5000;
 
-    // Perform application initialization:
-    if (!InitInstance (hInstance, nCmdShow))
-    {
-        return FALSE;
-    }
+	static const int Timer1MaxValue = 5;
+	static const int Timer2MaxValue = 3;
 
-    HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_LAB92SEM));
+	static int _timer1Ticks;
+	static int _timer15Ticks;
 
-    MSG msg;
+public:
+	static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+	{
+		switch (message)
+		{
+		case WM_CREATE:
+		{
+			OnCreate(hWnd);
+			return true;
+		}
 
-    // Main message loop:
-    while (GetMessage(&msg, nullptr, 0, 0))
-    {
-        if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
-        {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-        }
-    }
+		case WM_GETMINMAXINFO:
+		{
+			OnGetMinMaxInfo((LPMINMAXINFO)lParam);
+			return TRUE;
+		}
 
-    return (int) msg.wParam;
-}
+		case WM_TIMER:
+		{
+			OnTimer(hWnd, (int)wParam);
+			return true;
+		}
+
+		case WM_KEYDOWN:
+		{
+			if (wParam == VK_SPACE)
+				paused = ~paused;
+			break;
+		}
+
+		case WM_PAINT:
+		{
+			PAINTSTRUCT ps;
+			auto hdc = BeginPaint(hWnd, &ps);
+			OnPaint(hWnd, hdc);
+			EndPaint(hWnd, &ps);
+			break;
+		}
 
 
+		case WM_DESTROY:
+			PostQuitMessage(0);
+			break;
 
-//
-//  FUNCTION: MyRegisterClass()
-//
-//  PURPOSE: Registers the window class.
-//
-ATOM MyRegisterClass(HINSTANCE hInstance)
+	
+
+		default:
+			return DefWindowProc(hWnd, message, wParam, lParam);
+		}
+
+		return 0;
+	}
+
+private:
+	static void OnCreate(HWND hWnd)
+	{
+		SetTimer(hWnd, Timer1ID, Timer1Interval, nullptr);
+		SetTimer(hWnd, Timer5ID, Timer15Interval, TimerProc);
+	}
+
+	static void OnGetMinMaxInfo(LPMINMAXINFO minMaxInfo)
+	{
+		minMaxInfo->ptMinTrackSize.x = MinDialogWidth;
+		minMaxInfo->ptMinTrackSize.y = MinDialogHeight;
+	}
+
+	static void OnTimer(HWND hWnd, int timerID)
+	{
+		if (timerID != Timer1ID) return;
+		if(!paused)
+		++_timer1Ticks;
+		if (_timer1Ticks >= Timer1MaxValue)
+		{
+			_timer1Ticks = 0;
+		}
+
+		InvalidateRect(hWnd, nullptr, true);
+	}
+
+	static void CALLBACK TimerProc(HWND hWnd, UINT message, UINT_PTR idEvent, DWORD time)
+	{
+		if (idEvent != Timer5ID) return;
+		if(!paused)
+		++_timer15Ticks;
+
+		if (_timer15Ticks > Timer2MaxValue)
+		{
+			_timer15Ticks = 0;
+		}
+
+		InvalidateRect(hWnd, nullptr, true);
+	}
+
+	static void OnPaint(HWND hWnd, HDC hdc)
+	{
+
+		auto clientRect = GetClientRect(hWnd);
+		auto width = (clientRect.right - clientRect.left) / 2;
+		auto height = (clientRect.bottom - clientRect.top) / 2;
+		auto scale = 100;
+		switch (_timer15Ticks)
+			{
+			case 0:
+			{
+				DrawEllipse(hdc, width, height, scale, 255, 255, 0);
+				height += 100;
+				DrawEllipse(hdc, width, height, scale, 128, 128, 128);
+				height += -200;
+				DrawEllipse(hdc, width, height, scale, 128, 128, 128);
+				height += 100;
+				DrawTimerTicksText(hdc, width, height, scale);
+				break;
+			}
+			case 1:
+			{
+				DrawEllipse(hdc, width, height, scale, 128, 128, 128);
+				height += 100;
+				DrawEllipse(hdc, width, height, scale, 128, 128, 128);
+				height += -200;
+				DrawEllipse(hdc, width, height, scale, 255, 0, 0);
+				height += 100;
+				DrawTimerTicksText(hdc, width, height, scale);
+				break;
+			}
+			case 2:
+			{
+				DrawEllipse(hdc, width, height, scale, 255, 255, 0);
+				height += 100;
+				DrawEllipse(hdc, width, height, scale, 128, 128, 128);
+				height += -200;
+				DrawEllipse(hdc, width, height, scale, 128, 128, 128);
+				height += 100;
+				DrawTimerTicksText(hdc, width, height, scale);
+
+				break;
+			}
+			case 3:
+			{
+				DrawEllipse(hdc, width, height, scale, 128, 128, 128);
+				height += 100;
+				DrawEllipse(hdc, width, height, scale, 0, 255, 0);
+				height += -200;
+				DrawEllipse(hdc, width, height, scale, 128, 128, 128);
+				height += 100;
+				DrawTimerTicksText(hdc, width, height, scale);
+				break;
+			}
+			
+		}
+	}
+
+
+	static RECT GetClientRect(HWND hWnd)
+	{
+		RECT rect;
+		::GetClientRect(hWnd, &rect);
+		return rect;
+	}
+
+	static void DrawLines(HDC hdc, long width, long height)
+	{
+		auto defaultPen = SelectObject(hdc, CreatePen(PS_DASHDOTDOT, 1, Color::SteelBlue2));
+
+		MoveToEx(hdc, 0, height / 2, nullptr);
+		LineTo(hdc, width, height / 2);
+
+		MoveToEx(hdc, width / 2, 0, nullptr);
+		LineTo(hdc, width / 2, height);
+
+		SelectObjectAndDeletePrevious(hdc, defaultPen);
+	}
+
+	static void DrawRectangle(HDC hdc, long width, long height, long scale)
+	{
+		auto rectangleColor = (_timer15Ticks != 0) ? Color::Firebrick : Color::Sienna1;
+		auto defaultBrush = SelectObject(hdc, CreateSolidBrush(rectangleColor));
+		auto defaultPen = SelectObject(hdc, CreatePen(PS_SOLID, 2, Color::Black));
+
+		DrawRectangle(hdc, CalculateShapeRect(width / 4, height / 4, 0.85 * scale, 0.95 * scale));
+
+		SelectObjectAndDeletePrevious(hdc, defaultBrush);
+		SelectObjectAndDeletePrevious(hdc, defaultPen);
+	}
+
+	static void DrawEllipse(HDC hdc, long width, long height, long scale,int r , int g , int b)
+	{
+		auto defaultBrush = SelectObject(hdc, CreateSolidBrush(RGB(r,g,b)));
+
+		DrawEllipse(hdc, CalculateShapeRect(width , height , 0.95 * scale, 0.85 * scale));
+
+		SelectObjectAndDeletePrevious(hdc, defaultBrush);
+	}
+
+	static void DrawRoundRectangle(HDC hdc, long width, long height, long scale)
+	{
+		auto penBrush = LOGBRUSH{};
+		penBrush.lbColor = Color::Turquoise3;
+		auto defaultPen = SelectObject(hdc, ExtCreatePen(PS_GEOMETRIC | PS_DASH, 3, &penBrush, 0, nullptr));
+
+		DrawRoundRectangle(hdc, CalculateShapeRect(width , height, 0.95 * scale, 0.95 * scale), 0.15 * scale, 0.20 * scale);
+
+		SelectObjectAndDeletePrevious(hdc, defaultPen);
+	}
+
+	static void DrawTimerTicksText(HDC hdc, long width, long height, long scale)
+	{
+		auto defaultFont = SelectObject(hdc, CreateFont(L"Consolas", scale / 2, FW_BOLD));
+		SetTextColor(hdc, Color::SlateBlue);
+		SetBkMode(hdc, TRANSPARENT);
+
+		auto textRectangle = RECT{ width - scale, height - scale, width + scale, height  + scale};
+		auto text = std::to_wstring(_timer1Ticks);
+		DrawTextW(hdc, text.c_str(), -1, &textRectangle, DT_SINGLELINE | DT_CENTER | DT_VCENTER);
+
+		SelectObjectAndDeletePrevious(hdc, defaultFont);
+	}
+
+	static HFONT CreateFont(std::wstring name, int size, int weight)
+	{
+		auto lf = LOGFONT{};
+		wcscpy_s(lf.lfFaceName, name.data());
+		lf.lfHeight = size;
+		lf.lfWeight = weight;
+		lf.lfCharSet = DEFAULT_CHARSET;
+		return CreateFontIndirect(&lf);
+	}
+
+	static void DrawTriangle(HDC hdc, long width, long height, long scale)
+	{
+		auto defaultBrush = SelectObject(hdc, CreateSolidBrush(Color::SpringGreen3));
+		auto defaultPen = SelectObject(hdc, CreatePen(PS_NULL, 0, Color::Black));
+
+		auto points = InitializeTrianglePoints(CalculateShapeRect(width * 3 / 4, height * 3 / 4, 0.85 * scale, 0.85 * scale));
+		Polygon(hdc, points.data(), points.size());
+
+		SelectObjectAndDeletePrevious(hdc, defaultBrush);
+		SelectObjectAndDeletePrevious(hdc, defaultPen);
+	}
+
+	static std::array<POINT, 3> InitializeTrianglePoints(RECT triangleRect)
+	{
+		return
+		{
+			POINT { (triangleRect.left + triangleRect.right) / 2, triangleRect.top },
+			POINT { triangleRect.right, triangleRect.bottom },
+			POINT { triangleRect.left, triangleRect.bottom },
+		};
+	}
+
+	static RECT CalculateShapeRect(int xCenter, int yCenter, double width, double heigth)
+	{
+		auto x = xCenter - (int)width / 2;
+		auto y = yCenter - (int)heigth / 2;
+		return RECT{ x, y, x + (int)width, y + (int)heigth };
+	}
+
+	static void SelectObjectAndDeletePrevious(HDC hDeviceContext, HGDIOBJ gdiObject)
+	{
+		auto previousGdiObject = SelectObject(hDeviceContext, gdiObject);
+		DeleteObject(previousGdiObject);
+	}
+
+	static void DrawRectangle(HDC hDeviceContext, RECT rect)
+	{
+		Rectangle(hDeviceContext, rect.left, rect.top, rect.right, rect.bottom);
+	}
+
+	static void DrawRoundRectangle(HDC hDeviceContext, RECT rect, double roundWidth, double roundHeigth)
+	{
+		RoundRect(hDeviceContext, rect.left, rect.top, rect.right, rect.bottom, (int)roundWidth, (int)roundHeigth);
+	}
+
+	static void DrawEllipse(HDC hDeviceContext, RECT rect)
+	{
+		Ellipse(hDeviceContext, rect.left, rect.top, rect.right, rect.bottom);
+	}
+};
+
+int Application::_timer1Ticks = 0;
+int Application::_timer15Ticks = 0;
+
+int APIENTRY wWinMain(
+	_In_ HINSTANCE hInstance,
+	_In_opt_ HINSTANCE hPrevInstance,
+	_In_ LPWSTR    lpCmdLine,
+	_In_ int       nCmdShow)
 {
-    WNDCLASSEXW wcex;
+	UNREFERENCED_PARAMETER(hPrevInstance);
+	UNREFERENCED_PARAMETER(lpCmdLine);
 
-    wcex.cbSize = sizeof(WNDCLASSEX);
+	auto winApiModule = WinApiModule(
+		L"9_Timer_and_Drawing",
+		L"9. Таймер и рисование",
+		hInstance,
+		Application::WndProc);
 
-    wcex.style          = CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc    = WndProc;
-    wcex.cbClsExtra     = 0;
-    wcex.cbWndExtra     = 0;
-    wcex.hInstance      = hInstance;
-    wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_LAB92SEM));
-    wcex.hCursor        = LoadCursor(nullptr, IDC_ARROW);
-    wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
-    wcex.lpszMenuName   = MAKEINTRESOURCEW(IDC_LAB92SEM);
-    wcex.lpszClassName  = szWindowClass;
-    wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
-
-    return RegisterClassExW(&wcex);
-}
-
-//
-//   FUNCTION: InitInstance(HINSTANCE, int)
-//
-//   PURPOSE: Saves instance handle and creates main window
-//
-//   COMMENTS:
-//
-//        In this function, we save the instance handle in a global variable and
-//        create and display the main program window.
-//
-BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
-{
-   hInst = hInstance; // Store instance handle in our global variable
-
-   HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
-
-   if (!hWnd)
-   {
-      return FALSE;
-   }
-
-   ShowWindow(hWnd, nCmdShow);
-   UpdateWindow(hWnd);
-
-   return TRUE;
-}
-
-//
-//  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
-//
-//  PURPOSE: Processes messages for the main window.
-//
-//  WM_COMMAND  - process the application menu
-//  WM_PAINT    - Paint the main window
-//  WM_DESTROY  - post a quit message and return
-//
-//
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    switch (message)
-    {
-    case WM_COMMAND:
-        {
-            int wmId = LOWORD(wParam);
-            // Parse the menu selections:
-            switch (wmId)
-            {
-            case IDM_ABOUT:
-                DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
-                break;
-            case IDM_EXIT:
-                DestroyWindow(hWnd);
-                break;
-            default:
-                return DefWindowProc(hWnd, message, wParam, lParam);
-            }
-        }
-        break;
-    case WM_PAINT:
-        {
-            PAINTSTRUCT ps;
-            HDC hdc = BeginPaint(hWnd, &ps);
-            // TODO: Add any drawing code that uses hdc here...
-            EndPaint(hWnd, &ps);
-        }
-        break;
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        break;
-    default:
-        return DefWindowProc(hWnd, message, wParam, lParam);
-    }
-    return 0;
-}
-
-// Message handler for about box.
-INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    UNREFERENCED_PARAMETER(lParam);
-    switch (message)
-    {
-    case WM_INITDIALOG:
-        return (INT_PTR)TRUE;
-
-    case WM_COMMAND:
-        if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
-        {
-            EndDialog(hDlg, LOWORD(wParam));
-            return (INT_PTR)TRUE;
-        }
-        break;
-    }
-    return (INT_PTR)FALSE;
+	return winApiModule.Run(nCmdShow);
 }
