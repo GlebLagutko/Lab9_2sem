@@ -8,6 +8,7 @@
 using namespace std;
 
 bool paused = false;
+int counter = -1;
 
 class Application
 {
@@ -45,7 +46,7 @@ public:
 
 		case WM_TIMER:
 		{
-			OnTimer(hWnd, (int)wParam);
+			OnTimer1(hWnd, (int)wParam);
 			return true;
 		}
 
@@ -97,7 +98,7 @@ private:
 		minMaxInfo->ptMinTrackSize.y = MinDialogHeight;
 	}
 
-	static void OnTimer(HWND hWnd, int timerID)
+	static void OnTimer1(HWND hWnd, int timerID)
 	{
 		if (timerID != Timer1ID) return;
 		if(!paused)
@@ -110,12 +111,16 @@ private:
 
 		InvalidateRect(hWnd, nullptr, true);
 	}
+	
+	
+
 
 	static void CALLBACK TimerProc(HWND hWnd, UINT message, UINT_PTR idEvent, DWORD time)
 	{
 		if (idEvent != Timer5ID) return;
 		if (!paused)
 			++_timer15Ticks;
+		
 
 		if (_timer15Ticks > Timer2MaxValue )
 		{
@@ -132,7 +137,18 @@ private:
 		auto width = (clientRect.right - clientRect.left) / 2;
 		auto height = (clientRect.bottom - clientRect.top) / 2;
 		auto scale = 100;
-		switch (_timer15Ticks)
+		if(!paused)
+		{
+			if (_timer1Ticks == 0)
+			{
+				if (counter < 4)
+					counter++;
+				else
+					counter = 0;
+			}
+		}
+
+		switch (counter)
 			{
 			case 0:
 			{
