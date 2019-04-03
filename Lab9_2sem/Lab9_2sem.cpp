@@ -15,10 +15,10 @@ class Application
 	static const int MinDialogHeight = 250;
 
 	static const int Timer1ID = 1;
-	static const int Timer5ID = 5;
+	static const int Timer5ID = 2;
 
 	static const int Timer1Interval = 1000;
-	static const int Timer15Interval = 5000;
+	static const int Timer15Interval = 6000;
 
 	static const int Timer1MaxValue = 5;
 	static const int Timer2MaxValue = 3;
@@ -52,7 +52,12 @@ public:
 		case WM_KEYDOWN:
 		{
 			if (wParam == VK_SPACE)
-				paused = ~paused;
+			{
+				if (paused == false)
+					paused = true;
+				else
+					paused = false;
+			}
 			break;
 		}
 
@@ -97,7 +102,8 @@ private:
 		if (timerID != Timer1ID) return;
 		if(!paused)
 		++_timer1Ticks;
-		if (_timer1Ticks >= Timer1MaxValue)
+
+		if (_timer1Ticks > Timer1MaxValue)
 		{
 			_timer1Ticks = 0;
 		}
@@ -108,10 +114,10 @@ private:
 	static void CALLBACK TimerProc(HWND hWnd, UINT message, UINT_PTR idEvent, DWORD time)
 	{
 		if (idEvent != Timer5ID) return;
-		if(!paused)
-		++_timer15Ticks;
+		if (!paused)
+			++_timer15Ticks;
 
-		if (_timer15Ticks > Timer2MaxValue)
+		if (_timer15Ticks > Timer2MaxValue )
 		{
 			_timer15Ticks = 0;
 		}
