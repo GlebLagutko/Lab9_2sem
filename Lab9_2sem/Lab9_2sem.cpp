@@ -21,11 +21,11 @@ class Application
 	static const int Timer1Interval = 1000;
 	static const int Timer15Interval = 6000;
 
-	static const int Timer1MaxValue = 5;
+	static const int Timer1MaxValue = 3;
 	static const int Timer2MaxValue = 3;
 
 	static int _timer1Ticks;
-	static int _timer15Ticks;
+	static int _timer2Ticks;
 
 public:
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -54,10 +54,7 @@ public:
 		{
 			if (wParam == VK_SPACE)
 			{
-				if (paused == false)
-					paused = true;
-				else
-					paused = false;
+					paused = !paused;
 			}
 			break;
 		}
@@ -119,12 +116,12 @@ private:
 	{
 		if (idEvent != Timer5ID) return;
 		if (!paused)
-			++_timer15Ticks;
+			++_timer2Ticks;
 		
 
-		if (_timer15Ticks > Timer2MaxValue )
+		if (_timer2Ticks > Timer2MaxValue )
 		{
-			_timer15Ticks = 0;
+			_timer2Ticks = 0;
 		}
 
 		InvalidateRect(hWnd, nullptr, true);
@@ -141,7 +138,7 @@ private:
 		{
 			if (_timer1Ticks == 0)
 			{
-				if (counter < 4)
+				if (counter < 3)
 					counter++;
 				else
 					counter = 0;
@@ -151,6 +148,7 @@ private:
 		switch (counter)
 			{
 			case 0:
+			case 2:
 			{
 				DrawEllipse(hdc, width, height, scale, 255, 255, 0);
 				height += 100;
@@ -170,18 +168,6 @@ private:
 				DrawEllipse(hdc, width, height, scale, 255, 0, 0);
 				height += 100;
 				DrawTimerTicksText(hdc, width, height, scale);
-				break;
-			}
-			case 2:
-			{
-				DrawEllipse(hdc, width, height, scale, 255, 255, 0);
-				height += 100;
-				DrawEllipse(hdc, width, height, scale, 128, 128, 128);
-				height += -200;
-				DrawEllipse(hdc, width, height, scale, 128, 128, 128);
-				height += 100;
-				DrawTimerTicksText(hdc, width, height, scale);
-
 				break;
 			}
 			case 3:
@@ -222,7 +208,7 @@ private:
 
 	static void DrawRectangle(HDC hdc, long width, long height, long scale)
 	{
-		auto rectangleColor = (_timer15Ticks != 0) ? Color::Firebrick : Color::Sienna1;
+		auto rectangleColor = (_timer2Ticks != 0) ? Color::Firebrick : Color::Sienna1;
 		auto defaultBrush = SelectObject(hdc, CreateSolidBrush(rectangleColor));
 		auto defaultPen = SelectObject(hdc, CreatePen(PS_SOLID, 2, Color::Black));
 
@@ -256,7 +242,7 @@ private:
 	{
 		auto defaultFont = SelectObject(hdc, CreateFont(L"Consolas", scale / 2, FW_BOLD));
 		SetTextColor(hdc, Color::SlateBlue);
-		SetBkMode(hdc, TRANSPARENT);
+		SetBkMode(hdc, TRANSPARENT);                                                 
 
 		auto textRectangle = RECT{ width - scale, height - scale, width + scale, height  + scale};
 		auto text = std::to_wstring(_timer1Ticks);
@@ -327,7 +313,7 @@ private:
 };
 
 int Application::_timer1Ticks = 0;
-int Application::_timer15Ticks = 0;
+int Application::_timer2Ticks = 0;
 
 int APIENTRY wWinMain(
 	_In_ HINSTANCE hInstance,

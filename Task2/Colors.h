@@ -21,4 +21,6 @@ namespace Color
 	static const COLORREF SlateBlue = FromHex(0x6A5ACD);
 	static const COLORREF Sienna1 = FromHex(0xFF8247);
 	static const COLORREF Turquoise3 = FromHex(0x00C5CD);
+	static const COLORREF OrangeRed = FromHex(0xFF4500);
+	static const COLORREF DeepSkyBlue = FromHex(0x00BFFF);
 }

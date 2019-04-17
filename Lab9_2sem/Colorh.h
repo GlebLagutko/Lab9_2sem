@@ -2,7 +2,7 @@
 
 #include "stdafx.h"
 
-namespace Color
+namespace Colorh
 {
 	static COLORREF FromHex(int hex)
 	{
